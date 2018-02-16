@@ -1,0 +1,1597 @@
+#
+# fbdev configuration
+#
+
+menuconfig FB
+	tristate "Support for frame buffer devices"
+	select FB_CMDLINE
+	---help---
+	  The frame buffer device provides an abstraction for the graphics
+	  hardware. It represents the frame buffer of some video hardware and
+	  allows application software to access the graphics hardware through
+	  a well-defined interface, so the software doesn't need to know
+	  anything about the low-level (hardware register) stuff.
+
+	  Frame buffer devices work identically across the different
+	  architectures supported by Linux and make the implementation of
+	  application programs easier and more portable; at this point, an X
+	  server exists which uses the frame buffer device exclusively.
+	  On several non-X86 architectures, the frame buffer device is the
+	  only way to use the graphics hardware.
+
+	  The device is accessed through special device nodes, usually located
+	  in the /dev directory, i.e. /dev/fb*.
+
+	  You need an utility program called fbset to make full use of frame
+	  buffer devices. Please read <file:Documentation/fb/framebuffer.txt>
+	  and the Framebuffer-HOWTO at
+	  <http://www.munted.org.uk/programming/Framebuffer-HOWTO-1.3.html> for more
+	  information.
+
+	  Say Y here and to the driver for your graphics board below if you
+	  are compiling a kernel for a non-x86 architecture.
+
+	  If you are compiling for the x86 architecture, you can say Y if you
+	  want to play with it, but it is not essential. Please note that
+	  running graphical applications that directly touch the hardware
+	  (e.g. an accelerated X server) and that are not frame buffer
+	  device-aware may cause unexpected results. If unsure, say N.
+
+config FIRMWARE_EDID
+       bool "Enable firmware EDID"
+       depends on FB
+       default n
+       ---help---
+         This enables access to the EDID transferred from the firmware.
+	 On the i386, this is from the Video BIOS. Enable this if DDC/I2C
+	 transfers do not work for your driver and if you are using
+	 nvidiafb, i810fb or savagefb.
+
+	 In general, choosing Y for this option is safe.  If you
+	 experience extremely long delays while booting before you get
+	 something on your display, try setting this to N.  Matrox cards in
+	 combination with certain motherboards and monitors are known to
+	 suffer from this problem.
+
+config FB_CMDLINE
+	bool
+
+config FB_DDC
+       tristate
+       depends on FB
+       select I2C_ALGOBIT
+       select I2C
+       default n
+
+config FB_BOOT_VESA_SUPPORT
+	bool
+	depends on FB
+	default n
+	---help---
+	  If true, at least one selected framebuffer driver can take advantage
+	  of VESA video modes set at an early boot stage via the vga= parameter.
+
+config FB_CFB_FILLRECT
+	tristate
+	depends on FB
+	default n
+	---help---
+	  Include the cfb_fillrect function for generic software rectangle
+	  filling. This is used by drivers that don't provide their own
+	  (accelerated) version.
+
+config FB_CFB_COPYAREA
+	tristate
+	depends on FB
+	default n
+	---help---
+	  Include the cfb_copyarea function for generic software area copying.
+	  This is used by drivers that don't provide their own (accelerated)
+	  version.
+
+config FB_CFB_IMAGEBLIT
+	tristate
+	depends on FB
+	default n
+	---help---
+	  Include the cfb_imageblit function for generic software image
+	  blitting. This is used by drivers that don't provide their own
+	  (accelerated) version.
+
+config FB_CFB_REV_PIXELS_IN_BYTE
+	bool
+	depends on FB
+	default n
+	---help---
+	  Allow generic frame-buffer functions to work on displays with 1, 2
+	  and 4 bits per pixel depths which has opposite order of pixels in
+	  byte order to bytes in long order.
+
+config FB_SYS_FILLRECT
+	tristate
+	depends on FB
+	default n
+	---help---
+	  Include the sys_fillrect function for generic software rectangle
+	  filling. This is used by drivers that don't provide their own
+	  (accelerated) version and the framebuffer is in system RAM.
+
+config FB_SYS_COPYAREA
+	tristate
+	depends on FB
+	default n
+	---help---
+	  Include the sys_copyarea function for generic software area copying.
+	  This is used by drivers that don't provide their own (accelerated)
+	  version and the framebuffer is in system RAM.
+
+config FB_SYS_IMAGEBLIT
+	tristate
+	depends on FB
+	default n
+	---help---
+	  Include the sys_imageblit function for generic software image
+	  blitting. This is used by drivers that don't provide their own
+	  (accelerated) version and the framebuffer is in system RAM.
+
+menuconfig FB_FOREIGN_ENDIAN
+	bool "Framebuffer foreign endianness support"
+	depends on FB
+	---help---
+	  This menu will let you enable support for the framebuffers with
+	  non-native endianness (e.g. Little-Endian framebuffer on a
+	  Big-Endian machine). Most probably you don't have such hardware,
+	  so it's safe to say "n" here.
+
+choice
+	prompt "Choice endianness support"
+	depends on FB_FOREIGN_ENDIAN
+
+config FB_BOTH_ENDIAN
+	bool "Support for Big- and Little-Endian framebuffers"
+
+config FB_BIG_ENDIAN
+	bool "Support for Big-Endian framebuffers only"
+
+config FB_LITTLE_ENDIAN
+	bool "Support for Little-Endian framebuffers only"
+
+endchoice
+
+config FB_SYS_FOPS
+       tristate
+       depends on FB
+       default n
+
+config FB_DEFERRED_IO
+	bool
+	depends on FB
+
+config FB_HECUBA
+	tristate
+	depends on FB
+	depends on FB_DEFERRED_IO
+
+config FB_SVGALIB
+	tristate
+	depends on FB
+	default n
+	---help---
+	  Common utility functions useful to fbdev drivers of VGA-based
+	  cards.
+
+config FB_MACMODES
+       tristate
+       depends on FB
+       default n
+
+config FB_BACKLIGHT
+	bool
+	depends on FB
+	select BACKLIGHT_LCD_SUPPORT
+	select BACKLIGHT_CLASS_DEVICE
+	default n
+
+config FB_MODE_HELPERS
+        bool "Enable Video Mode Handling Helpers"
+        depends on FB
+	default n
+	---help---
+	  This enables functions for handling video modes using the
+	  Generalized Timing Formula and the EDID parser. A few drivers rely
+          on this feature such as the radeonfb, rivafb, and the i810fb. If
+	  your driver does not take advantage of this feature, choosing Y will
+	  just increase the kernel size by about 5K.
+
+config FB_TILEBLITTING
+       bool "Enable Tile Blitting Support"
+       depends on FB
+       default n
+       ---help---
+         This enables tile blitting.  Tile blitting is a drawing technique
+	 where the screen is divided into rectangular sections (tiles), whereas
+	 the standard blitting divides the screen into pixels. Because the
+	 default drawing element is a tile, drawing functions will be passed
+	 parameters in terms of number of tiles instead of number of pixels.
+	 For example, to draw a single character, instead of using bitmaps,
+	 an index to an array of bitmaps will be used.  To clear or move a
+	 rectangular section of a screen, the rectangle will be described in
+	 terms of number of tiles in the x- and y-axis.
+
+	 This is particularly important to one driver, matroxfb.  If
+	 unsure, say N.
+
+comment "Frame buffer hardware drivers"
+	depends on FB
+
+config FB_GRVGA
+	tristate "Aeroflex Gaisler framebuffer support"
+	depends on FB && SPARC
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	---help---
+	This enables support for the SVGACTRL framebuffer in the GRLIB IP library from Aeroflex Gaisler.
+
+config FB_CIRRUS
+	tristate "Cirrus Logic support"
+	depends on FB && (ZORRO || PCI)
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	---help---
+	  This enables support for Cirrus Logic GD542x/543x based boards on
+	  Amiga: SD64, Piccolo, Picasso II/II+, Picasso IV, or EGS Spectrum.
+
+	  If you have a PCI-based system, this enables support for these
+	  chips: GD-543x, GD-544x, GD-5480.
+
+	  Please read the file <file:Documentation/fb/cirrusfb.txt>.
+
+	  Say N unless you have such a graphics board or plan to get one
+	  before you next recompile the kernel.
+
+config FB_PM2
+	tristate "Permedia2 support"
+	depends on FB && ((AMIGA && BROKEN) || PCI)
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3D Labs Permedia, Permedia 2 and Permedia 2V chips.
+	  The driver was tested on the following cards:
+		Diamond FireGL 1000 PRO AGP
+		ELSA Gloria Synergy PCI
+		Appian Jeronimo PRO (both heads) PCI
+		3DLabs Oxygen ACX aka EONtronics Picasso P2 PCI
+		Techsource Raptor GFX-8P (aka Sun PGX-32) on SPARC
+		ASK Graphic Blaster Exxtreme AGP
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRO AGP
+		EGP
+		f, choosetrue, lerNNIT
+	h on FBtive enetru whiEGPnling.l sizeDIAN
+	bool "Suppohoot FB SPAR cards bhoice
+
+c
+		EOKEN) || Petru whiEGPnling.l size
+		EGP
+		f, cARMCt n	depends on FRM PrimeCeirePL110PCI)
+	select FB_CFB_FIFRM YARFRM64 YARCOMPort_TESTect FB_CFB_FILLRECTFRM_AMBame buffer deviceAGEBLIT
+	help
+	  This is the frame buffer device driver for buffer deing Helpers"
+	 IOFor bufferVIDEOing Helpers"
+	 IOFor cards based ideo modes semedia, Permedisary from FRM PrimeCeirePL110rs of l, cht n for(aklport  FRM PrimeCeirse framebuffe Laild choostheocksary fSamebuf't h Crdsbuffer.txsupport for ase notee
+	  module wcalled pm2f (=clt nr to bn eab for yosucte standa thehoonglhe Video BI the hart"
+	de)	depenMme viw if youd the Framebuffer-HOWTO akLaild/d pm2fsoard oDiamond pm2f PleaFireGL 1000 PRamba-clcdxsu#p---
+	  llect Ff VESA vice iEnarom FRM Vrofaue
+	 erntur g fami bufEGP
+		fPLA-helRSAport_Ct n	dns _ on FileHhelRSAport YARFReHhfraLVIEW YARFReHhVEXPRESS YARFReHhINTEGRATORect FB_CFB_FIFRMIAN
+	bool "SuppoARMCt nRECTFB=y		EGP
+		f, cACORly"
+
+endcAcornrVIDCPCI)
+	select FB_CFB_FI(LLR= y)RECTFRMRECTFReHhACORly"lect FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3D Labs Permedia, Permedia 2rom FcornrVIDCPer of some video hardiau.
+
+	n FcornrR leB Sblem.
+m thiTFRMhips: Gre,
+	  sware dri"Enable firmware EDID"
+  devLPS711X_OLD  Common utilect FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver fo EDID"
+  devLPS711X& (ZORRO || PLPS711Xht n CI)
+	select FB_CFB_FILLRECT
+FReHhPLPS711XhYARCOMPort_TEST	select FB_CFBLPS711X_OLD
+	 IFReHhPLPS711XhECT!FReHhMULTIPLA-FORMIASS_DEVICE
+	default n
+
+config FB_MODE_ndling Helpers"
+FB_MODE_ndl---help---
+	  B_MODE_ndl---h the frame buffer de	---help---
+	   buffert n
+      bool "En bufferVIDEOing Helpers"AR cards bh essendaeyour drik/programming, Permedia 2rom  SD64, Piccors ofLPS711XhCPUnds on FB
+    SA1100y"
+
+endchA-1100ht n CI)
+	select FB_CFB_FI(LLR= y)RECTFRMRECTFReHhSA1100y"lect FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+a ideo modes semedia,ry from AA-1100ht n Cor(aklportds bhee-HOWTO-1.3.htl pro-CMODEr mo/he driyour graphiB_FIideo modes unsure, satxsupport for ernel.
+
+sed throt n which hs oppoe, chAA-1100hD-543x, irmke fu
+	dependsn FB
+    IMX& (ZORRO || Ff ns100e i.MX1/21/25/27ht n CI)
+	select FB_CFB_FILLRECTFReHhMXCIASS_DEVICE
+	default n
+
+config FB_MODE_t n
+      bool "En buffer deviceAGEBLIT
+	help
+	  This is the frame buffer device driver for buffer deing Helpers"En bufferVIDEOing Helpers"A EDID"
+  devYBER2000y"(ZORRO || PyberPro 2000/2010/5onimCI)
+	select FB_CFB_FILLRECT SPRECT
+_CFB_ChYAR!mpile64	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based e GRLIB IP library from Intext recompPyberPro 20x0lem.
+5000y" istacards:accelenfig FBRebdepe
+	 Netwar orlem.
+m thiTre,
+	  swds bh esseit for these
+	NetWar orlg forxt recomp Syn for(ain certainunsure, sa,
+m thiwied irmware EDID"
+  devYBER2000elect"
+
+endclecmiga: yberPro BOTH_ENDIAN
+	bool "SuppovYBER2000y" buffer delect"ns will yAR cards bh esseiw ifit for ase nDDCPCI)
+	sei810fb or  yberPro er of some v Syn own
+	  (aice iI2C LaB IP libr,hoosing Y will
+	 sed featre EDID"
+  devYBER2000e you 
+
+endcPyberPro 2000/2010/5onimI2C BOTH_ENDIAN
+	bool "SuppovYBER2000RECTI2C ECTFReHhNETWINDERect FB_CFB_FII2C=yhYARppovYBER2000=my" buffernfig FB_BOOTR cards bEive endianness (e.g. LI2C a and declt r  anything AGP
+		 softwtext recompPyberPro 20x0lem.
+5000istacards:. own (accelera devic.g. LNetwar orlre,
+	  s,ry from AAA7111 a and cic ize
+		EGP
+		f, cAPOLL
+	depends on FB
+	dep(LLR= y)RECTFPOLL
+	dns will yARlect FB_CFB_IMAGEBLIT
+	help
+	  This is driver fo EDID"
+  deQ40	depends on FB
+	dep(LLR= y)RECTQ40	dns will yARlect FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver fo EDID"
+  deselec	depends on Fr EG on a
+	 ards:et CI)
+	select FB_CFB_FILLRECTFelec	d cards based on
+	  the 3D Labs Permedia, Permedia 2rom Lailtnfier of some v rds:et iau.
+
+	n Fr EGtxsuppo the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRamiGP
+		EGP
+		f, cFelec_OCSy"
+
+endcAr EG OCS ards:et CI)
+	select FB_CFB_FILL_Felec	d cards based e GRLIB IP library from origina Fignublem.
+Denied a and crds: "Choiau.
+
+	n rom Fr EG ronimem.
+
+cst A500'blem.
+A2000'bool "for  anyaphicsndarunon progig FBy the kesehD-543xs firmwY;
+m thiwied irmware EDID"
+  deFelec_ECSy"
+
+endcAr EG ECS ards:et CI)
+	select FB_CFB_FILL_Felec	d cards based e GRLIB IP library from Enhanc PRCrdsbSer,hiau.
+
+	n rnts unsuA500'b, rnts 
+A2000'bmber oA600mber oA3000mber oA3000Tlem.
+CDTVs feature,   anyapsndarunon progig FBy the kesehD-543xs firmwY;
+m thiwied"Choirmware EDID"
+  deFelec_Aec	d
+
+endcAr EG Atacards:et CI)
+	select FB_CFB_FILL_Felec	d cards based e GRLIB IP library from Aincrc PRGt recompAwith it, bu (alsboolMDLINE
+r driveAtacy fAA)RCrdsbSer,hiau.
+
+	n riveA1200mbA4000mbA4000T order oCD32ool "for  anyapsndarunon progig FBy the kesehD-543xs firmwY; devi thiwied irmware EDID"
+  deF ((A
+
+endcAr EG progrM modulII/RainbowlII CI)
+	select FB_CFB_FI(LLR= y)RECTFB_COy"lect FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3D Labs Permedia, Permedia 2rom Fr EG progrM modume v Syne VideBleB(exhibiSA v1992ing gl
+	 srdsp PRaalleCBMe frduct)
+		EGP
+		f, cARC	depends on Frc Monochrare t n ile thCI)
+	select FB_CFB_FILLRECTX86
+FB_MODE_ndl---help---
+	  B_MODE_ndl---h the frame buffer de	---help---
+	   buffer      defauld cards based e GRLIB IP library from Arc Monochrare t n ile t.iamonile tfor y Permedia from KS-108 lcd for(aklporfb.
+
+	n
+	yprted by ffer ix via th2*ncards:. Tle will be L 1000 PRO  oppoG r28x64 pa	dep Tle unsurll be IP librsgrapry fsed  oppoplaySBCsin the /dG r6ngul GPe
+	d   anything (8ngul data, 8ngul for(akl)ool "for aportips onl, choosdule will be firmwYcy fM;
+m thiwied irmwarfull mFB_Tev difyrser. A fPe
+ e
+ addrn the i of a spry fwith cerfor(aklfb.
+
+data
+		EGP
+		f, cATARI(A
+
+endcAtari on a
+	 ards:et CI)
+	select FB_CFB_FI(LLR= y)RECTFTARI(Alect FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3D Labs Permedia, Permedia 2rom Lailtnfier of some v rds:et iau.
+
+	n Ftarinds on FB
+    OFor
+
+endcOFB_ppia      he 3D Labs Permedia,CI)
+	select FB_CFB_FI(LLR= y)RECT(PPC64 YARPPC OF)RECT(!PPC PSERIESPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for buffer dei  defaulR cards bh esseit for ase nIP libra oppoOFB_ppia      hng a kernel for oosthle t.e EDID"
+  devONTROL(A
+
+endcAppond\"for(akl\" which hsCI)
+	select FB_CFB_FI(LLR= y)RECTPPC Pi  RECTPPC32select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for buffer dei  defaulR cards bTle will be IP librsga he 3D Labs Peame buffer of so adic 
+config Frrusfow
+coMactandsh 73nimem.
+m thinds on FB
+    PLA-INUM(A
+
+endcAppond\"ernt prm\" which hsCI)
+	select FB_CFB_FI(LLR= y)RECTPPC Pi  RECTPPC32select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for buffer dei  defaulR cards bTle will be IP librsga he 3D Labs Peame buff"ernt prm"rnel for oostadic 
+confiware fow
+coMactandshends on FB
+    VALKYRIE(A
+
+endcAppond\"valkyrie\" which hsCI)
+	select FB_CFB_FI(LLR= y)RECT(i  RYAR(PPC Pi  RECTPPC32)	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for buffer dei  defaulR cards bTle will be IP librsga he 3D Labs Peame buff"valkyrie"rnel for oostadic 
+confiware fow
+coMactandshends on FB
+    CT65550y"
+
+endcCrds:a65550 which hsCI)
+	select FB_CFB_FI(LLR= y)RECTPPC3ot FB SPARlect FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3D Labs Permedia, Permedia 2rom Crds:a& 
+		Anollece oost65550 xt recomp rdsbnfifow
+cBooknds on FB
+    ASILIAN
+	h on FBAsilise n(Crds:) 69onimwhich hsCI)
+	select FB_CFB_FI(LLR= y)RECTPSPARlect FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3D Labs Permedia, Permedia 2rom Asilise n69o30v rds:etndsn FB
+    IMST
+	h on FBIMS TwnfiTurbomwhich hsCI)
+	select FB_CFB_FI(LLR= y)RECTPSPARlect FB_CFB_IM driver for buffer dei  defaueit PPCor cards base IMS TwnfiTurbomon
+a   chips: Ghe 3D Labs Pe Synebu.
+lRO  opp:
+		DFBy Mactandsh em.
+e
+	 nt e ene
+	 uthinds on FB
+    VGA16	depends on stac16-
+
+	 ernel for aCI)
+	select FB_CFB_FILLRECT
+	  oYARPPC	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for bufferstaSTAT"En buffer ONT_8xr6nit FRAMEBUFFERevONSOLEor cards based on
+	  the 3D Labs Permedia, Permedia 2stac16 
+
+	 ernel for    dependbh esseit for these you nece t.e ppo the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRvga16GP
+		EGP
+		f, cBF54X_LQ043ect FB_CMDLINHARP LQ043 TFT t n (BF548 EZKIT)lect FB_CFB_FILLRECT
+BF54x)RECT!BF542select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards ased on
+	  the 3DLabs Permedia, Permedia 2a NHARP LQ043T1DG01 TFT t n		EGP
+		f, cBFIN_T350MCQlect FB_CMDLIVari(aka x COG-T350MCQl TFT t n which hs
+BF527 EZKIT)lect FB_CFB_FILLRECTBLACKFINIASS_DEVICFIN_GPTIMrs"
+FB_MODE_ndlB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards ased on
+	  the 3DLabs Permedia, Permedia 2a Vari(aka x VL-PS-COG-T350MCQl-01 which hsTFT t n	s ased which hson
+a Qstac320x240 24-gul RGB which hsoanythingleratan 8-gul wmebuPPPARwareveralPPP[0..7]lPPP_FS1,lPPP_FSon the PP_CLK.		EGP
+		f, cBFIN_LQ035Q1ect FB_CMDLINHARP LQ035Q1DH02sTFT t nlect FB_CFB_FILLRECTBLACKFINOPYAREPARlect FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver forSS_DEVICFIN_GPTIMrs"
+F cards based on
+	  the 3DLabs Permedia, Permedia 2a NHARP LQ035Q1DH02sTFT which hsiau.
+
+a 2V chipsBlackfnfiL thscape t n EZ-ExnyapmedCe t.es bTle wihich hson
+a Qstac320x240 18-gul RGB which hsoanythingleratan 16-gul wmebuPPPARwwareveralPPP[0..15]lPPP_FS1,lPPP_FSon the PP_CLK.		ppo the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRbfnf-lq035q1-GP
+		EGP
+		f, cBF537_LQ035ect FB_CMDLINHARP LQ035 TFT t n (BF537 STAMP)lect FB_CFB_FILLRECT
+BF534 YARBF536 YARBF537)RECTI2C_BLACKFIN_TWPARlect FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver forSS_DEVICFIN_GPTIMrs"
+F cards based on
+	  the 3DLabs Permedia,ia 2a NHARP LQ035Q7DB03sTFT t n	s  attachre regaRBF537.		ppo the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRbf537-lq035.		EGP
+		f, cBFIN_7393ect FB_CMDLIBlackfnfiADV7393B
+	defaenclt rlect FB_CFB_FILLRECTBLACKFINIASS_DEVI you lect FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3DLabs Permedia,ia 2a ADV7393Bv	defaenclt r	s  attachre regaRBlackfnfia from  PPich u.upport forrRBlackfnfiile thhcalleADV7393B bufferY.		ppo the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRbfnf_adv7393GP
+		E on FB_FOREIGNLIV and the  CI)
+	select FB_CFB_FILL_BFIN_7393ecns will NTSC		EGP
+		fNTSC	h on F'NTSC 720x480'		EGP
+		fPAL(A
+
+end'PAL 720x576'		EGP
+		fNTSC_640x480	h on F'NTSC 640x480 (Ere yoer-HOl)'		EGP
+		fPAL_640x480	h on F'PAL 640x480 (Ere yoer-HOl)'		EGP
+		fNTSC_YCBCR	h on F'NTSC 720x480 YCbCRsoa ut'		EGP
+		fPAL_YCBCR	h on F'PAL 720x576 YCbCRsoa ut'		   depends o on FB_FOREIGNLISol "ofeADV7393Bhe 3D Labs Pememory Sdex t/Doue enSol lect FB_CFB_FI(LL_BFIN_7393)ecns will ADV7393_1XMEM		EGP
+		fADV7393_1XMEM	h on F'Sdex t'		EGP
+		fADV7393_2XMEM	h on F'Doue e'    depends on FB
+     TIect FB_CMDLIHP STI he 3D Labs Permedia,CI)
+	select FB_CFB_FILLRECT AR leARlect FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver forSS_DEVISTIevONSOLEor buffersT	dns will yARc GD542x/543x STI reristae i386,HP "Secause tT "PeIanything"nr to bon
+a :et e; at rk f rout	  s,for(ainelenfia ROMp rdsbnfiHP PA-R leBips: Gre,
+	  swds bEive  certain g delay Firend more pi386,l prothe 3DLabs Permediadri"Esoria Sirsee i386,STI rk f rout	  s, driyoiatioisraphics	upport for eyour driverg delat it i Fireconfa ernearthe 3DLabs Permediadri"bset tonr to b Fire depths tmond sl foVGA-bHP nel for2 and Pthe kedri"NGLE fami b of are  parser 
+	 usl frds:a(	n rive7xogramsBxxogs yous) "ChoHCRX,oHCRX24, CRX,oCRX24gramsVisEGgs yousxsupportys whileendaeyour driverg delat so it ishould safe to supporY"ds on FB
+       	h on FBG driverMactandsh which hsCI)
+	select FB_CFB_FI(LLR= y)RECT   	hlect FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for buffer dei  defauls on FB_DEFEP300	depends on FB
+	dep(LLR= y)RECTDIOy"lect FB_CFB_IM driver forns will yAlitting Suppec	depends on pec/SFB+ect FB_CFB_FILLRECT
+	select FB_CFB_COPYA(ALPHA YARTC	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for bufferBITREelRSan abstraction for ed on
+	  the 3D Labs Permedia, Permedia 2y driverpecgramsSFB+n fonel for2 and oDiamoIGAiware imDEC ZLXp-E1,l-Eon the-E3T SPR and  "ChoalsbMDLINE
+r dPBXGA-A,l-Bn the-CadvantDEC ZLX-E1,l-Eon the-E3n forURBOchfig lR and  oalsbMDLINE
+r dPdriD-A,l-Bn the-CxsuppoDueendaideo hardlimitn accelZLX-Eon theE3T and Pxpected 	  applic"ChoiartDECsportabl5000/200hD-543x oDiAddirtabed bydueendaOS. Enab"Cholimitn accel keseh and Ponfig FIRM(akuRLIB  oppo, try seDECsportab"Cho5000/24imem.
+/260hD-543xs fng g    hud by	  applicauapmedn progieature,  mneagel.
+
+conful go the ;-)s board belit for theset "Fthe kMIGds on FB
+    Ue vg	depends on Us ysping e vgastacnel for aCI)
+	select FB_CFB_FILLRECTerNNIT
+ORec buffer deviceAGEBLIT
+	help
+	  This is the frame buffer device driver for buffer deing Helpers"En cards based on
+	  the 3D Labs PerPermedia 2y driverVBE 2.0he
+	 lise n fonel for2 and oDrtyn eaalsbM just increase theVBE 3.0h.l size  "Cho  your drerze h M.
+
+t i FB_re pe nodes,e will be ou
+	 exlyare. It res whi.l size sionn vehilbfng noderequize saeverysping h--
+	  this point, 1000 PR'v86d'.bheenodeless you have such a gruvehilboard e driver  your graphics boal "Enable firmware EDID"
+  B_e vg	d on FBe vgastacnel for aCI)
+	select FB_CFB_FI(LLR= y)RECTX86
+FB_MODE_ndlviceAGEBLIT
+	help
+	  This is the frame buffer device driver for buffer de	---help---
+	  If t cards based on
+	  the 3D Labs Permedia, Permedia 2y driverV vga2.0    d
+	 lise onel for2 and oDase olpmedV vga1.2T and Pxpected 	  applicwds bYt i Fireconfa FILLRtoer FB_gudepengoonfino addirtabed d
+stns that noderethe Framebuffer-HOWTO at
+	vehilboard ool "Enable firmwYre EDID"
+  B_EFI(A
+
+endcEFIhips: Gprogramming,SI)
+	select FB_CFB_FI(LLR= y)RECTX86RECTEFI(Alect FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  tEFIthe 3D Labs Permedia, Permeool "o BIOS. Enab
+a 2V cforrRerntur g on
+EFIt1.10cy fUEFIt2.0,B bufferY regadd IP library dri"Esoria	  tEFIthe 3DLabs PeascforrREDIsolGds on FB
+    N411lt n
+
+config FB_ "N411 ApSA G/Hecubaermekit CI)
+	selelp---
+         This RECTX86RECTMMUT_VESA_SUPPORT
+Fdl---help---
+	 _VESA_SUPPORT
+Fdl---h the fram_VESA_SUPPORT
+Fdl---h driver fo_VESA_SUPPORT
+Fdl---hefault n
+
+co buffer deln FB
+	defaut n
+
+co buffer deERRED_It n
+
+co cardg is a drawing techniqIP library from ApSA G which hsfor(aklporfdepitsdg is a drHecubaeur g Esoria	  tn411 rmekitds on FB
+    Hec	depends on Hercm2fs
+
+coocnel for aCI)
+	select FB_CFB_FILLRECTX86
+F cards bh esseiw ifit for these
+	Hercm2fs
+
+coocnel for ace t.e ppo the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRhgaafe.  I Asdule w Synet		Anollehson
+advantage25 yea   tld,:
+		Di's seopond Fireansw
+coN
+	dependsn FB
+    GBE(A
+
+endcSGIRGt recompBackyapshe 3D Labs PeCI)
+	select FB_CFB_FI(LLR= y)RECTSGI_IP32select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver fo t cards based on
+	  the 3D Labs Permedia, Permedia 2SGIRGt recompBackyap.es bTle w rdsbn:accelenfiSGIRO2gramsVisued Wdepsportabl320/540endsn FB
+    GBE_MEM	hi
+conV and temory ool "nfiMBlect FB_CFB_FILL_GBE(Ans will 4or cards based on
+	  tamount e; temory d
+	 rv spry f	  the 3DLabs P,:
+		r to bn eab  FBy valueebetwment1MBn the8MBds on FB
+    SBUSy"
+
+endcSBUSn theUPAt for Big-Endiact FB_CFB_FI(LLR= y)RECTSpile t cards bh esseit for ase nIP libraia 2SBUSny fUPAtips: Ghe 3D Labs Permedia.		EGP
+		f, cBW((A
+
+endcBWtwo BOTH_ENDIAN
+	bool "Su(LLR= y)RECT(SpileRECTFB SBUS	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3D Labs Permedia, Permedia 2hipsBWtwo he 3D Labs Pds on FB
+    CG3y"
+
+endcCGthrea,CI)
+	select FB_CFB_FI(LLR= y)RECT(SpileRECTFB SBUS	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3D Labs Permedia, Permedia 2hipsCGthrea,he 3D Labs Pds on FB
+    CG6y"
+
+endcCGsix (GX,TurboGX),CI)
+	select FB_CFB_FI(LLR= y)RECT(SpileRECTFB SBUS	select FB_CFB_IM the frame buffer device driver for cards based on
+	  the 3D Labs Permedia, Permedia 2hipsCGsix (GX, TurboGX)"Choie 3D Labs Pds on FB
+    Fs fo
+
+endcCrettor/Crettor3D/Elite3n CI)
+	select FB_CFB_FILL SBUSRECTSpile64select FB_CFB_IM the frame buffer device driver for cards based on
+	  the 3D Labs Permedia, Permedia 2hipsCrettor, Crettor3D, order oElite3n xt recompile tnds on FB
+    TCXfo
+
+endcTCXT(SS4/SS5aice ),CI)
+	select FB_CFB_FI   SBUSy"lect FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3D Labs Permedia, Permedia 2hipsTCXT24/8gul tation/fb/frameds on FB
+    CG14y"
+
+endcCGforrtment(SX),CI)
+	select FB_CFB_FI   SBUSy"lect FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3D Labs Permedia, Permedia 2hipsCGforrtmenttation/fb/frameb_FIDesktopTSpileD-543xs  oppo386,SX xt recompg delads on FB
+    P9100y"
+
+endcP9100t(Sparc
+
+ek 3aice ),CI)
+	select FB_CFB_FI   SBUSy"lect FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3D Labs Permedia, Permedia 2hipsP9100tce tfor 	  applica comparc
+
+ek 3are,
+	  swd-Endian framEOy"
+
+endcLnd (ZX),CI)
+	select FB_CFB_FI   SBUSy"lect FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3D Labs Permedia, Permedia 2hipsSBUShips: Ge AGZice e(leo)Ghe 3D Labs Pe Synswd-Endian fraIec	d
+
+endcItac168x which hsCI)
+	select FB_CFB_FI(LLR= y)RECTSpile32select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3DLabs Permedia,ia 2g. LINTERGRAPHICSc1680graphicssu On tlp---
+	  The fra Synswd-Endian fraXVR500y"
+
+endch AGXVR-500 3DLABS Wildcat CI)
+	select FB_CFB_FI(LLR= y)RECT SPRECTSpile64select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3DLabs Permedia,ia 2g. Lh AGXVR-500 er osimilarn fonel fors2 and Permediuphs tmon3DLABS Wildcat  rds:et.Diamond Fire device isdepsB_FIsparc64 D-543xs  ns (tiles)amebufOS. Enab
+h pixe	Di's, saoiatioize	  Say Synealrethy.portys wtrett PRaall    d
+	 lete bydumbthe 3DLabs Permediawd-Endian fraXVR2500y"
+
+endch AGXVR-2500 3DLABS Wildcat CI)
+	select FB_CFB_FI(LLR= y)RECT SPRECTSpile64select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3DLabs Permedia,ia 2g. Lh AGXVR-2500 er osimilarn fonel fors2 and Permediuphs tmon3DLABS Wildcat  rds:et.Diamond Fire device isdepsB_FIsparc64 D-543xs  ns (tiles)amebufOS. Enab
+h pixe	Di's, saoiatioize	  Say Synealrethy.portys wtrett PRaall    d
+	 lete bydumbthe 3DLabs Permediawd-Endian fraXVR1000y"
+
+endch AGXVR-1onimCI)
+	select FB_CFB_FI(LLR= y)RECTSpile64select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3DLabs Permedia,ia 2g. Lh AGXVR-ronimem.
+similarn fonel fors2 and .Diamond Firevice isdepsB_FIsparc64 D-543xs  ns (2V chips)amebufOS. Enab
+h p	Di's, saoiatioize	  Say Synealrethy.portfor y Ptrett PRaall d
+	 lete bydumbthe 3DLabs Permediawd-Endian fraPVR2	depends on NECifow
+cVR 2 which hsCI)
+	select FB_CFB_FI_COPYARH_DfraMCAS
+	help
+	  This isAGEBLIT
+	---help---
+	  This enables support for Cirrus Logic GD542x/543x h esseiw ifit for these
+	fow
+cVR 2  Syneids in
+	box.port for ernel.
+noder AGl progig  in
+	Dretmcastt it i Firetheses suppou
+	depenodes,e will be onfioe onfiidiafb, ihiB_ thiTfow
+cVR 2  Syns fng ge unsutotexlyal> f PRO.poUse
+adv in
+	INE
+penk.oal "Enable firmware ppo the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRpvr2afe.  I Yt is nosteaevice is number of p
+	  are compiladvFILLRtoer a 2at:
+		Diamondlo
+	  oer.Diamonnumber of pl
+ek likff"v and=pvr2:XXX",  ns (2V chipsmean cerof XXXbn eab  iau.
+
+api386,yapsthe ke onnfiwa GrapFramce e( Frame "Aerof/v and/pvr2afec>)ns that dsee"o BIOSlenodeless you have such a grpvr2afeard or on FB
+    OPENCORE&& (ZORRO || OFB_Coze sVGA/t n fo if2.0hct FB_CFB_FILLRECT
+	select FB_CFB_COPYAHAS_DMame buffer deviceAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based e GRLIB IP library from OFB_Coze sVGA/t n fo ie nodes, uOFB_Coze sVGA/t n fo if	n
+	yprted bycceletoge thiT opp:
+		s thfo ifCPUnn machiOFB_R leBy fMic    aze) oA
+	triare.On tlp:
+		s-543xs  machiAl ofa	s cfpga oA
+Xou
+	x ZynqTo coFPGAse nodes, uwa Grapclt nem.
+sv dif point, ry from fo if	n
+availaur duffer-HOWTO-1.openclze r mo/re.jffe,vga_lcd>s on FB
+    S1D13XXX& (ZORRO || Eps com1D13XXXhct FB_CFB_FILLRECT
+	select FB_CFB_Cme buffer deviceAGEBLIT
+	help
+	  This is the frame buffer device driver for cards bhoice
+
+confim1D13XXXhct FB_CFB_FIrmedia,iami b (curthe  b ice :
+		rb,  cer oppom1D13806)ns frduct
+sv dsduffer-HOWTO-1.vdc.eps cpe
+	/>s on FB
+    ATMEL	depends on FT91/AT32ht n Cor(aklporILLRECT
+	select FB_CFB_COPYAHAVE_   ATMEL	d buffer de	D_SUPPORT
+ buffer deviceAGEBLIT
+	help
+	  This is the frame buffer device driver for buffer deing Helpers"En buffersIDEOing Helpers"AR cards bawing techniqIP library from AT91/AT32ht n Cor(aklporwd-Endian fraINTSRAM(A
+
+endcfig FBBr.
+
+confioanytbed SRAMlect FB_CFB_FILL_FTMELRECTFReHhAT91SAM9261 t cards bh esseit for ase ne reap fig FBBr.
+
+confioanytbed SRAM.an to git for ase unsuto	  no--
+	  The franfiexnytbed SDn FB
+	default n
+FTMEL_STly"
+
+endcUse
+a STl which hs oppoAT91/AT32ht n Cor(aklporlect FB_CFB_FILL_FTMELRECT(i  HhAT91SAM9261EK YARi  HhAT91SAM9G10EK)ecns will n t cards bh esseit for ase ne rEGPnlinga STl t n which hs
+	  areAT91/AT32ht nds bCor(aklporwan to git for ase ne rEGPnlinga TFTcs boal "Enable firmware EDID"
+  B_NsIDIc	depends on nVg Y Gprogramming,SI)
+	select FB_CFB_FILLRECT SP	d buffer de	D_SUPPORnit FB_NsIDIce	D_SUPPORT
+ buffer deing Helpers"
+FB_MODE_ndlB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for bufferBITREelRSan  bufferstaSTAT"En cards bTle will be IP librsgxt recompile tn  oppo386,nVg Y Gcrds:  TNT order oneworwaf us bey tld  rds:ets fi your driveRIVA128mber nycce2V chips take wds bh esseit for these you next recompile tre ppo the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRing Y fore EDID"
+  B_NsIDIc_	bool
+	depe on FB
+      DDCP    ---help---
+         This _NsIDIc	t n
+
+co buffer delect I2C_AL cards bawing techniqI2C BOTH_ENary fnVg Y GCrds:ets. own (accelera deviclydia 2y th cerfeatuyour graphiB Video BIattachre which h"Choal Gloriaia 2   FB_Ta and the ing Formulem.
+s op,
+	 gre pporawing fCMODE-2.6erequize sion anradeonfmFB_Tb  Fur dr
+nodear o    he  b vioids ona and the inumber of , it ishould uppounode	dependsn FB
+    NsIDIc_DEBUGy"
+
+endcLot Pthedrameroutpuelect FB_CFB_FI   NsIDIc	dns will n t cards bh esseiw ifit for ase n386,nVg Y Gill be mentutpueoal uwabrs devihedramegivideour graphiBs a framebufoe ke onnf(ainer  nsn:
+		s atrox cag wilwro gre sn FB
+    NsIDIc_CD_SUPPORT
+	seldchoice
+
+confibacklighl for(akllect FB_CFB_FI   NsIDIc	dns will yAR cards bh esseiw ifit for ase ne rEGP(aklfrom Lacklighl ofs in
+	 combinre sn FB
+    RIVA	depends on nVg Y GRtakmCI)
+	select FB_CFB_FILLRECT SP	d buffer de	D_SUPPORnit FB_RIVAe	D_SUPPORT
+ buffer deing Helpers"
+FB_MODE_ndlB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for bufferBITREelRSan  bufferstaSTAT"En cards bTle will be IP librsgxt recompile tn  oppo386,nVg Y GRtak/G2
+	tcread the fwds bh esseit for these you next recompile tre ppo the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PR take wd sn FB
+    RIVA_	bool
+	depe on FB
+      DDCP    ---help---
+         This _RIVA	t n
+
+co buffer delect I2C_AL cards bawing techniqI2C BOTH_ENary fnVg Y GCrds:ets. own (accelera deviclydia 2y th cerfeatuyour graphiB Video BIattachre which h"Choal Gloriaia 2   FB_Ta and the ing Formulem.
+s op,
+	 gre pporawing fCMODE-2.6erequize sion anradeonfmFB_Tb  Fur dr
+nodear o    he  b vioids ona and the inumber of , it ishould uppounode	dependsn FB
+    RIVA_DEBUGy"
+
+endcLot Pthedrameroutpuelect FB_CFB_FI   RIVA	dns will n t cards bh esseiw ifit for ase n386,Rtakmill be mentutpueoal uwabrs devihedramegivideour graphiBs a framebufoe ke onnf(ainer  nsn:
+		s atrox cag wilwro gre sn FB
+    RIVAe	D_SUPPORT
+	seldchoice
+
+confibacklighl for(akllect FB_CFB_FI   RIVA	dns will yAR cards bh esseiw ifit for ase ne rEGP(aklfrom Lacklighl ofs in
+	 combinre sn FB
+    I740y"(ZORRO || Ianyl740mCI)
+	select FB_CFB_FILLRECT SP	d buffer deing Helpers"
+FB_MODE_ndlB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for bufferstaSTAT"En buffer delect" cards bTle will be IP librsgxt recomp and Permedia  Ianyl740mthe re sn FB
+    I810y"(ZORRO || Ianyl 810/815mCI)
+	select FB_CFB_FILLRECT SPRECTX86_3ot FBAGPhINTEL	d buffer deing Helpers"
+FB_MODE_ndlB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for bufferstaSTAT"En cards bTle will be IP librsgrom on-ile thxt recompiailtonfigoe ke Ianyl 810 ivafb, and  the815mcrds:ets. oh esseit for these
+theernel.
+
+sed  you neile tre vafb, and  the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRof thise vafb, and Fdriver  your graphi,eer.txt>.
+
+	 nodeless you have such a groanylf teard e sn FB
+    I810_GTFor
+
+endcsed V vgafew drivers rely
+         lect FB_CFB_FI   I810y" cards brt for uppoumber ny ke V vgaBecause , few drivers rely
+          ivafb, and tr GTF,ection of a sne rEalnsurte"o BIrequizedna and tely
+  values dev
+	  a and the . ohi geto BIGTFoal Glill
+nwhiErete"oely
+ s ivafb, and (l
+nwhiErete"bermule ranse thevalues tes in l sne rwhiErete"bermuleivafb, and :et e;evalues), it 'ion ofFur dr
+
+sed FBy  are known te;ehorizor(al  order o betrted d
+	olu acce,der o betrted d
+rze h M.
+
+n  oppe Tithe choosduoTev difyr in
+	INE
+tely
+  number of . own (acceeev died byccefuloosduoTmaxelyzeto BI
+	 ur gr gettermn agdefaulombinatdriyt for  FB_Tivafb, and these
+	which hs oppol
+nBecause tdoer-nfigsh asV vgad
+	 lise o:
+		Dionfigaccermedim   hd fng gn eastFire dept oppol
+n-d
+	 lise oo  swds brt for neethe kase n38ismber ny bufferriverg delaoDase oely
+ s onfids bidiabead
+	 lise o oppoIanyl'cermedim   hdevalues.oUse
+adv in
+	INE
+noderenk.e vafb, and rt for uppoN,  are compilctionrice tne rwhiErete"a and tely
+ s dri"Esoriaa :et rmedim   hdeby Ianyl 	n rivig Y  have such . va vafb, and rt Enable firmware EDID"
+  B_I810_ you 
+
+endc
+      DDCP    ---hect FB_CFB_FI   I810RECTFB I810_GTFor buffer delect" card-Endian framE80578y"(ZORRO || Ianyl mE80578 (Vermilch ),CI)
+	select FB_CFB_FI  RECT SPRECTX86	d buffer deing Helpers"
+FB_MODE_ndlB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards bTle will be IP librsgrom mE80578 (Vermilch  Ranse)v rds:etndsn FB
+    CARGEBO_RANCHy"(ZORRO || Ianyl CariA G Ranou CI)
+	select FB_CFB_FI   mE80578 ECTFBRECT SPRECTX86	d cards bTle will be IP librsgrom mE80578 (CariA G Ranou)nile tf-Endian fraINTEL	depends on Ianyl 830M/845G/852GM/855GM/865G/915G/945G/945GM/965G/965GM,CI)
+	select FB_CFB_FI  RECT SPRECTX86t FBAGPhINTELRECTEXersRT
+ buffer deing Helpers"
+FB_MODE_ndlB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for bufferFde	---help---
+	  Ifnit FB_INTELR= yARt FB_CFB_FI!DRM_I915En cards bTle will be IP librsgrom on-ile thxt recompiailtonfigoe ke Ianyl vafb, and 830M/845G/852GM/855GM/865G/915G/915GM/945G/945GM/965G/965GM,crds:ets. vafb, and h esseit for these
+theernel.
+
+sed  you neile tre ppo thmjustFB_INTELFB=Ye deptfor neeths suppoAGPhINTEL=hs
+	ore ppo the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRoanylafe.  I Fdriver  your graphi,eer.txt>.
+
+	 less you have such a groanylafeard f-Endian fraINTEL_DEBUGy"
+
+endcIanyl ill be DramerMessageflex Gaisler framaINTEL	dc GD542x/543x h esseiw ifit for ase n386,Ianyl ill be mentutpueoal uwabrs devihedramegivideour graphiBs a framebufoe ke onnf(ainer  nsn:
+		s atrox cag wilwro gre sn FB
+    INTEL_ you 
+
+endclec/I2C onfiIanyl ct FB_CFB_FILLRECT
+	select FB_CFB_ChINTEL	d buffer delect"ns will yAR cards bh esseiw ifit for ase nDDC/I2C BOTH_ENary f in
+	In-ile thIanyl xt recomds on FB
+      TROX& (ZORRO || Mer ha accbufrraphilect FB_CFB_FILLRECT SP	d buffer deB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for bufferFdeport"
+       r buffer dei  defaueit PPC Pi  gic GD542x/543x h esseiw ifit for these
+	Mer ha MFirennium,	Mer ha MFirennium II, ordMer ha MystFque,dMer ha MystFque 220,dMer ha  frducttakmG100,dMer ha ordMystFque G200,dMer ha MFirennium G200,dMer ha Marvyl G200"a and, ordMer ha G400,dG450cy fG550  Syneids in
+	box.e ppo the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRfer hardw.  I Yt is nosteaevice is number of p
+	  are compiladvFILLRtoer a 2at:
+		Diamondlo
+	  oer.Damonnumber of pl
+ek likff"v and=fer hard:XXX", raphicstate nd y-axis.
+ less you have such a grfer hardward or on FB
+      TROX_MGEBENIUM(A
+
+endcMFirennium I/II CI)
+	select FB_CFB_FI     TROX&  cards bh esseiw ifit for these
+	Mer ha MFirennium y fMer ha MFirennium IIds ba and ci t.irt for ubuffer"Aincrc PR Gllevyl ill be g delas"eGL Gl, ordit ishould check 4 bppnnuck PRpinst, 8ngppnnuck PRpinst, r6ngprds bnuck PRpinst, 24 bppnnuck PRpinste
+the32 bppnnuck PRpinst. Yt is n"Choals
+
+sed foe o odth wihFB_Fe pi Vide8or on FB
+      TROX_MYSTIQUE(A
+
+endcMystFque CI)
+	select FB_CFB_FI     TROX&  cards bh esseiw ifit for these
+	Mer ha MystFque y fMer ha MystFque 220ds ba and ci t.irt for ubuffer"Aincrc PR Gllevyl ill be g delas"eGL Gl, ordit ishould check 8ngppnnuck PRpinst, r6ngprbnuck PRpinst, 24 bppds bnuck PRpinste
+the32 bppnnuck PRpinst. Yt is noals
+
+sed foe o odth ds bihFB_Fe pi Vide8or on FB
+      TROX_Gy"
+
+endcG100/G200/G400/G450/G550 CI)
+	select FB_CFB_FI     TROX& c GD542x/543x h esseiw ifit for these
+	Mer ha G100,dG200,dG400,dG450cy fG550 ermedds ba and ci t.irt for ubuffer"Aincrc PR Gllevyl ill be g delas", it :
+		should check 8ngppnnuck PRpinst, r6ngprbnuck PRpinst, 24 bppbnuck Pds bninste
+the32 bppnnuck PRpinst. Yt is noals
+
+sed foe o odth ds bihFB_Fe pi Vide8or s brt for neethBOTH_ENary fG400bed oauseyasso , it imFB_Te essend s b Mer ha I2C BOTH_ENDe
+the"G400bed oauasso  BOTH_ENDerighl GL Glwds bG450/G550 Cd oauseyasso fb.
+
+digi(al tutpueoare CI)
+	seRO  oppog nodeaddirtabed d pm2fso nodes, uill be Itabrsgrn	Dionfigathe . ull mFB_Tsed throfer ha:et t
+endce e(availaur duf leTO-1.erntan.vc.cvut.cz/pub/l prorfer ha-urtest/>)p
+	 :
+		swapnnrimseyaem.
+sd oauseyasso ftutpuesatdrie rEhanse tutpueothe . o43x hd oauseyasso f compilalways Itabrgrn	640x480 d
+	olu accaem.
+it i:
+		DFB_Tsed fb:et t
+rEhanse ipe nodeDobidiary confion aed oauasso  BOTH_EN(aice ir6n
+the32 bppds bnuck PRpinstst so itbon
+a goois.deanotee
+	  modulemstandathrot"
+	deoosduoo. Yt is nosed ice iware foe o odth ,ur drive compilveraly driveds bnutany
+  ne.Ondize s(hips)d oauseyasso f  will
+	 sed accbufrraphids bengive)e nodeG450/G550 ideo hards nowhich hsTVRpit, bu iclydiVide)d oauseyaCRTC, order oitI
+	 ur gill
+ s100y
+ t so pit, bu DFB_Tthese525tdri625tl	  swd-Endian fra  TROX_ you (ZORRO || Mer ha I2C BOTH_ENDIAN
+	bool "Suppo  TROX&  buffer delect"abstraction for ed nradeonfcrett siI2C LaBwilw to bxpecteet spry fa On toria	  nodeDDC (I2C) LaB pd
+	 e oo oal uMer haee,deriI2C LaB w to nodear ofEGPnlins	Mer ha g delaed re, sat, likffMGA-TVOoo oG200"raphicsG400,der ohips)d oauseyasso fDDC LaB, pd
+	 e oo oG400biclyw.  I Yt is noirmwYcy fMeiw ifit for ase ne rere yoer-Ho oppoDionfigds bie it,nt, 1he . ull mFB_TirmwYcy fMeiw ifit for ase ne rsed ei thi:
+		sd oauasso  iheG400birfMGA-TVOoo oG200"y fG400or s brt for e
+	  moditI p	Dipm2fb.ul wml ucrett lled pm2f nbertfor y2c-fer hardw. on FB
+      TROX_MAVENu (ZORRO || G400bed oauasso  BOTH_ENDIAN
+	bool "Suppo  TROX_GRECTFB   TROX_ you abstraction foWARN    !!!or ed BOTH_ENa  will
+	  dept oppoG450c!!!s board bely fMeiw ifit for ase ne rsed as)d oauseyasso f(mean certwo:
+		Dionfigsgrn	numbirel)oo oG400birfMGA-TVOoadd-hiB_FIG200. hd oauseynode	da
+
+	n
+l
+	 e
+	 nt e en oppoGccbufrra spXFf n 3.3.x Sstac	 rv gsg-:
+		sd oauseyasso ftutpue y Pelank PRw t enfor ar  yo X. WoppoXFf n:
+		3.9.17 pd
+view for e nosed bopposso sfit for sed SstacormediMODE igds bo BIOMODE d FirevicfOS.B_Ttso fb.
+
+o BIOMODE d Firevicfed oauasso or s brt for e
+	  moditI p	Dipm2fb.two d pm2fs ar  crett d,:
+		Der hard_crtc2gramsDer hard_mhesn.	Mer hard_mhesn
+	n
+leet spry :
+		boppoG200"rapsG400,dDer hard_crtc2g	n
+leet spice iEnaG400o ull mFB_"Choals
+
+lo
+	 y2c-fer hardl.
+
+conful ndaruno nodes, uill be Itabrsgrn	Dionfigathe aem.
+it imFB_Tsed throfer ha:etoosduoole(availaur dufnodeleTO-1.erntan.vc.cvut.cz/pub/l prorfer ha-urtest/>)p
+	 s op,
+ful ndnodePAL igaNTSC drie rswapnnrimseyaem.
+sd oauseyasso ftutpues.43x hd oauseyasso f compilals
+
+always Itabrgrn	640x480 d
+	olu acc, it :
+		DFB_Tsed fb:et t
+rEhanse ipe nodeAls
+
+dobidiary confion aed oauasso  BOTH_EN(aice ir6n
+the32 bppds bnuck PRpinstst so itbon
+a goois.deanotee
+	  modulemstandathrot"
+	deoosduoo.  Yt is nosed ice iware foe o odth ,ur drive compilveraly driveds bnutany
+  ne.Ondize s(hips)d oauseyasso f  will
+	 sed accbufrraphids bengive)e nsn FB
+    RADEON	depends on FTI Raandn which hsCI)
+	select FB_CFB_FI_COPYA SP	d buffer de	D_SUPPORnit FB_RADEONe	D_SUPPORT
+ buffer deing Helpers"
+FB_MODE_ndlB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for buffer dei  defaueit PPC OFor cards bC
+AMIGAtain g delayit for ase ne rsed an FTI Raandn xt recomp Syn  pixe	a ideo modes semedia.Diamore ar  boppo SPRem.
+AGPo benfigsh  Yt ds bion't neeths sc
+AMIGAtain ndaruno386,Raandn rn	nlnnfistacthe . nodes,  if	n
+ae frductbnug dufnodeOWTO-1. frducts.amdpe
+	/en-us/Gt recoCe tResult.aspx nsn FB
+    RADEON_ you 
+
+endclec/I2C onfiFTI Raandn BOTH_ENDIAN
+	bool "SuppoRADEON	d buffer delect"ns will yAR cards bh esseiw ifit for ase nDDC/I2C BOTH_ENary f in
+	Raandn ile t.i nsn FB
+    RADEON_	D_SUPPORT
+	seldchoice
+
+confibacklighl for(akllect FB_CFB_FI   RADEON	dns will yAR cards bh esseiw ifit for ase ne rEGP(aklfrom Lacklighl ofs in
+	 combinre sn FB
+    RADEON_DEBUGy"
+
+endcLot PthedrameroutpuediVideRaandn wcompilect FB_CFB_FI   RADEON	dns will n t cards bh esseiw ifit for ase n386,Raandn wcompi mentutpueoal uwabrs devihedramegivideour graphiBs a framebufoe ke onnf(ainer  nsn:
+		s atrox cag wilwro gre sn FB
+    ATY128	depends on FTI Rage128 which hsCI)
+	select FB_CFB_FI_COPYA SP	d buffer deB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for bufferFde	D_SUPPORnit FB_ATY128e	D_SUPPORT
+ buffer dei  defaueit PPC Pi  gi cards bTle will be IP librsgxt recompile tn  oppo386,FTI Rage128 the fwds bh esseit for these you next recompile tRem.
+.
+
+	nodeless you have such a graty128rdward or ppo the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRaty128rdwe sn FB
+    ATY128_	D_SUPPORT
+	seldchoice
+
+confibacklighl for(akllect FB_CFB_FI   ATY128	dns will yAR cards bh esseiw ifit for ase ne rEGP(aklfrom Lacklighl ofs in
+	 combinre sn FB
+    ATY	depends on FTI Mach64 which hsCI)
+	seleit PSPR||TFTARI(At FB_CFB_FI_COPYA!Spile32select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for bufferFde	D_SUPPORnit FB_ATYe	D_SUPPORT
+ buffer dei  defaueit PPCgi cards bTle will be IP librsgxt recompile tn  oppo386,FTI Mach64 the fwds bh esseit for these you next recompile tre ppo the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRatyrdwe sn FB
+    ATY_CRT
+	seldcMach64 CT/VT/GT/LTa(	ncl. 3D Rriv),CI)
+	select FB_CFB_FI SPRECT   ATY	dns will yeit Spile64OPYA SP	d cards bh esseiw ifto BOTH_ENosed if,FTI's	64-gul Rug dile tn (nfio thi:
+		ile tn ermedia from Mach64 CT, VT, GT,der oLTacrds:ets)Raall    ideo modes semedia.Diamo,FTI  frductbBOTH_ENonug dry froms dile tnfor yn
+advHOWTO-1.BOTH_EN.sucpe
+	/ frducts/pc/mach64/mach64.html>we sn FB
+    ATY_GENERIC_t nds	seldcMach64 y drivert n CI)
+	select FB_CFB_FILL_FTY_CRT
+ cards bh esseit for these
+	laptopT oppoGn,FTI RageoLTaPRO, RageoMobility,:
+		RageoXCatdriRageoXL  rds:et.e sn FB
+    ATY_GXds	seldcMach64 GXsCI)
+	seleit PSPect FB_CFB_FILL_FTY	dns will yeit FTARI(A cards bh esseiw ifto BOTH_ENosed if,386,FTI Mach64 Gt recompExpd
+	sphids bile tR(nfio thi	ile tn ermedia from Mach64 GXs rds:et)Raall    ideo modes semedia.Diamo,FTI  frductbBOTH_ENonug dry froms dile tnfor yn
+adnodelOWTO-1.BOTH_EN.sucpe
+	/ frducts/pc/mach64/xt recom_xpd
+	sphi.html>we sn FB
+    ATY_	D_SUPPORT
+	seldchoice
+
+confibacklighl for(akllect FB_CFB_FI   ATY	dns will yAR cards bh esseiw ifit for ase ne rEGP(aklfrom Lacklighl ofs in
+	 combinre sn FB
+    S3ect FB_CMDLIN3 Trio/Vi cosCI)
+	select FB_CFB_FI_COPYA SP	d buffer deB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for bufferFdeport"
+       r buffer deSstaLICme bufferstaSTAT"En buffer ONT_8xr6nit FRAMEBUFFERevONSOLEorabstraction foDPermedia 2yt recompile tn  oppoN3 Trio /oN3 Vi costhe re sn FB
+    S3elect"
+
+endclecconfim3,CI)
+	select FB_CFB_FI   S3	d buffer delect"ns will yAR cards bh esseiw ifit for ase nDDC BOTH_ENary f in
+	m3,nel for ace t.e sn FB
+    SAVrivect FB_CMDLIN3 SavacosCI)
+	select FB_CFB_FI_COPYA SP	d buffer deing Helpers"
+FB_MODE_ndlB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for bufferstaSTAT"En cards bTle will be IP librsgnote
+
+eks em.
+e
+	 uthin  oppoN3 Savacos SP/AGPds bthe fwdds bh esseit for these you next recompce t.e ppo the
+	  module will be called pm2fb.
+
+AMIGA && BR;e ke o pm2f ppo FireGL 1000 PRsavacordwe sn FB
+    SAVriv_	bool
+	depe on FB
+      DDC2P    ---help---
+         This _SAVrivet n
+
+co buffer delect I2C_AL cards bawing techniqI2C BOTH_ENary fN3 SavacosCrds:ets. own (accelera deviclydia 2y th cerfeatuyour graphiB Video BIattachre which h"Choal Gloriaia 2   FB_Ta and the ing Formulem.
+s op,
+	 gre pporawing fCMODE-2.6erequize sion anradeonfmFB_Tb  Fur dr
+nodear o    he  b vioids ona and the inumber of , it ishould uppounode	dependsn FB
+    SAVriv_ACCELol
+	depe on FB
+      CDIsolG Accbufrraphilelp---
+         This _SAVrivet n
+
+cons will n  I2C_AL cardvafb, and  ain g delay Firee
+	  modinREDIsolG accbufrraphi BOTH_EN.irtdvafb, and o BIresultoriaideo modes sEDIsolG h p	bm thinare glop,
+esmber ndvafb, and 
+
+AMIGAN
+	dependsn FB
+    SI&& (ZORRO || SiS/XGI which hsCI)
+	select FB_CFB_FI_COPYA SP	d buffer deB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for bufferFde	---help---
+	  Ifnit FB_SI&R= yAR cards based on
+	  the 3D Labs Permedia, Permedia 2hipsSiS 300,d315,d330 order o340mC yous calweireas XGI V3XT, V5,dV8, Z7 xt recomp rds:ets. s bhv dsduvailaur duf lOWTO-1.www.sispe
+	>der olOWTO-1.www.xgit		Ape
+	>.e ppo the
+	  module will be called pm2fb.
+
+AMIGA && BR;e ke o pm2f ppo FireGL 1000 PRsisrdwe sn FB
+    SIS_300y"
+
+endchiS 300mC yous CI)
+	select FB_CFB_FI   SIS(A cards bh esseiw ifto BOTH_ENosed if,386,hiS 300/305,d540,d630"raps730we sn FB
+    SIS_315En
+
+endchiS 315/330/340mC yous capsXGI CI)
+	select FB_CFB_FI   SIS(A cards bh esseiw ifto BOTH_ENosed if,386,hiS 315,d330der o340mC yousce e(315/H/PRO, 55x,d650,d651, 740,d330,d661, 741, 760, 761) calweir ordes XGI V3XT, V5,dV8der oZ7re EDID"
+  B_eIc	t n
+
+cot FB_CMDLIVIA UniChrare (Pro)der oChrare9 which hsCI)
+	selelp---
+         This RECT SPRECTX86	t n
+
+co buffer deB_IMAGEBLIT
+	t n
+
+co buffer deB_IM the fram_VESA_SUPPORT
+Fdlvice driver fo VESA_SUPPORT
+I2C_ALGOB fo VESA_SUPPORT
+I2Co VESA_SUPPORT
+GPIOLICm I2C_AL cards bawingon
+	  the 3D Labs Permedia, Permedia 2Gt recomp rds: theVIc	d  UniChrare (Pro)dFami b (CLE266,PM800/CN400,P4M800CE/P4M800Pro/ds bCN700/VN800,CX700/VX700,P4M890)der oChrare9 Fami b (K8M890,CN896	ts b/P4M900,VX800)ds bh esseit for these
+	VIA UniChrare xt recompile tre ppo the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRvY fore it FB_VIc	 EDID"
+  B_eIc_DILIT
+_PROCFSy"
+
+endcdizect ideo harda On tRvY  ne.Ofs (DEPLITAT"D)(DANGEROUS)lect FB_CFB_FILL_VIc	dns will n t cards bAl Gl dizect ideo harda On tRto Bare tutpueoregFB_eonfvY  ne.Ofs.ds bawingon
+danserousfng gonfi framebufhd ice iEhancel.
+
+confrds:
+		corzect tutpueormedia,EDID"
+urraphics	portcelerys wh(akag bydiscin
+acodre EDID"
+  B_eIc_XM tMPFTIBIr fYy"
+
+endcXc	 rv g e
+	 nt eilitylect FB_CFB_FILL_VIc	dns will n t cards b ain g delayreducen
+	  thuncdelaedity (pow
+cRsavy
+ t ...)Pthe kedri"ideo modes sregavoi onegnt esei	 nctia from OFB_Chrare Xc	 rv gwds brt for sed FBy Xc	 rv g o thi	ionn OMODE it ishould eyour drive devi thiwisoditIshould GL hileendadisour ditI .
+
+al Gl Esoriaair ord.l size .		   ife sn FB
+    NEOdriIou (ZORRO || NeoMagic which hsCI)
+	select FB_CFB_FI_COPYA SP	d buffer deing Helpers"
+FB_MODE_ndlB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for bufferstaSTAT"En cards bTle will be IP librsgnote
+
+eks  oppoNeoMagic  SPR he fwds bh esseit for these you next recompce t.i nppo the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRneordwe sn FB
+    KYRO	depends on IMG Kyro BOTH_ENDIAN
+	bool "Su_COPYA SP	d buffer deB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards bh esseiw ifit for these
+	STG4000 / Kyro /Tfow
+cVR 3 ermedds bxt recompile tre ppo the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRkyrordwe sn FB
+    3DFX& (ZORRO || 3Dfx Banshee/Voodoo3/Voodoo5 which hsCI)
+	select FB_CFB_FI_COPYA SP	d buffer deB_IM driver for bufferFdeB_IMAGEBLIT
+	help
+	  This is the frame buffer deing Helpers"AR cards bawingill be IP librsgxt recompile tn  oppo386,3Dfx Banshee,:
+		Voodoo3tdriVSA-100t(aka	Voodoo4/5)v rds:.bh esseit for thes:
+		syou next recompile tre ppo the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRtdfardw. on FB
+    3DFX_ACCELo"
+
+endc3Dfx Accbufrraphithuncdelaflex Gaisler frama3DFX& abstraction awing Firee
+	  mod386,3Dfx Banshee/Voodoo3/VSA-100the 3D Labs Pex Gedia, Permed oppoGccbufrraphithuncdelafw. on FB
+    3DFX_ you 
+
+endc
+      DDC/I2C BOTH_ENDIAN
+	bool "Suppo3DFX&  buffer delect"ns will yAR cards bh esseiw ifit for ase nDDC/I2C BOTH_ENary f in
+	3dfa	Voodoo3re EDID"
+  B_eOODOO1& (ZORRO || 3Dfx Voodoo2Gt recomp(sst1),CI)
+	select FB_CFB_FI  RECT SP	help
+	  This isAGEBLIT
+	---help---
+	  This enables support for Cirrus Logic GD542x/543x h esseiw ifit for these
+	3Dfx Voodoo2Gt recomp(Voodoo1/sst1),y f:
+		Voodoo2 (cvg) ermedinel for ace t.e ppo the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRsstrdw.  I WARN   :eDobidiased FBy this point, ion averal386,3Dbengivece e(nber byglmeb)Rw t enEsoria	 e will bewds bPr.txt>.
+
+	 386,less you have such a grsstrdward e dri	  applic"Chog delasI .
+
+o thi	i	 pplse nyourr 	  applre EDID"
+  B_eT8623ect FB_CMDLIVIA eT8623sCI)
+	select FB_CFB_FI_COPYA SP	d buffer deB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for bufferFdeport"
+       r buffer deSstaLICme bufferstaSTAT"En buffer ONT_8xr6nit FRAMEBUFFERevONSOLEorabstraction foDPermedia 2CastleRockear ogrra spnel for acer  yoKrds:
+		VIA eT8623s[ApSA G CLE266]  rds:et.e sn FB
+    TRIDENT oepends on pri he /CyberXXX/CyberBlae  CI)
+	select FB_CFB_FILLRECT SP	help
+	  This isAGEBLIT
+	---help---
+	  This enables support for Cirrus Logic GD542x/543x awingon
+	  the 3D Labs Permedia, Permedia 2pri he s SP/AGPp rds:ets. s bhI)
+	seRO  rds:et,iami ifs ar  TGUI 9440/96XX,,3DImaco, Blae 3D order oBlae  XP.nodes,  ifhardals
+
+ar ogrra sp benfigsPthe kesep rds: 1000 PRCyberXXXX,:
+		CyberImaco,y fCyberBlae .iamoIGA rds: hardDi's, siau.
+
+depeaptope devng g ls
+
+hi Bare mo thiile tn f are  parear, sVIA EPIA mo thiile tn.nodeFdriver  your graphi,e.
+
+	 less you have such a grtri he afeard f-s bh esseit for these you next recompile tre ppo the
+	  module will be called pm2fb.
+
+AMIGA && BROKrds:
+		Diamond FireGL 1000 PRtri he afee sn FB
+    ARK	depends on FRK 2000PVsCI)
+	select FB_CFB_FI_COPYA SP	d buffer deB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for bufferFdeport"
+       r buffer deSstaLICme bufferstaSTAT"En buffer ONT_8xr6nit FRAMEBUFFERevONSOLEorabstraction foDPermedia 2 SPRxt recompile tn  oppoFRK 2000PVs rds order oICSc5342 RAMDACwd-Endian fraPM3ect FB_CMDLIPermedia3sCI)
+	select FB_CFB_FI_COPYA SP	d buffer deB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3D Labs Permedia, Permedia 2hips3DLabs Permedia3ds bthe fet,accelenfi    ac  frFr gr getIII,s3DLabs Oxygen VX1 &:
+		similarpile tn,s3DLabs Permedia3 Crette!, Appinn Jeronimo 2000 order omaybeio thi	ile tnds on FB
+    CARMINvect FB_CMDLIFujits is rmiveshe 3D Labs PeCI)
+	select FB_CFB_FI_COPYA SP	d buffer deB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3D Labs Permedia, Permedia 2hipsFujits iC rmivesthe reodes, uill be re. It retwo ar o    he the 3D Labs Permediands ohoicreaN
+	bool "SuppoCARMINvecre.mpt "Dn F tely
+ "t"ns will ppoCARMINv_Dn F_EVALs on FB
+    CARMINv_Dn F_EVALs 
+
+endc
+valbile tRtely
+ s"or cards bUse
+tely
+ s w to bfb, ihiB386,yvalbce t.e sn FB
+ CARMINv_Dn F_CUSTOM(A
+
+endcCustombile tRtely
+ s"or cards bUse
+custombile tRtely
+ s.	   ohoicre sn FB
+    AU1100y"
+
+endcAu1100rt n Dcompilect FB_CFB_FI(LLR= y)RECTMIPS_ALCHEMY	d buffer deB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3DLabs PerPermedia 2386,FMD Au1100rSOC.portys nowPermds bvariousfpanelsI .
+
+CRTsiEnasteaivideoot"
+	de cmdtl	  og dela ordeu1100fb:panel=<nber>we sn FB
+    AU1200y"
+
+endcAu1200/Au1300rt n Dcompilect FB_CFB_FI(LLR= y)RECTMIPS_ALCHEMY	d buffer de---help---
+	 d buffer de---h the frame buffer de---h driver fod buffer de---hefaulr cards based on
+	  the 3DLabs PerPermedia 2386,Fu1200/Au1300rSOCswds brtys nowPermbvariousfpanelsI .
+
+CRTsiEnasteaivideoot"
+	de cmdtl	  "Chog deladeu1200fb:panel=<nber>we sn FB
+    eT8500y"
+
+endcVIA eT8500hct FB_CFB_FILLRECT
+	select FB_CFB(LLR= y)RECTARMRECTFReHheT8500y" buffer de---help---
+	nit (! deWMT_GE_Rfau) d buffer de---h the franit (! deWMT_GE_Rfau) d buffer de---h driver for buffer deing Helpers"En buffersIDEOing Helpers"AR cards bawingon
+	  the 3DLabs PerPermedia 2VIA eT8500har ogrra spt nds bcor(aklporwd-Endian fraWM8505En
+
+endcWo  hrmedia WM8xxx-C yous he 3D Labs PeCI)
+	select FB_CFB_FI(LLR= y)RECTARMRECTFReHheT8500y" buffer de---help---
+	nit (! deWMT_GE_Rfau) d buffer de---h the franit (! deWMT_GE_Rfau) d buffer de---h driver for buffer deing Helpers"En buffersIDEOing Helpers"AR cards bawingon
+	  the 3DLabs PerPermedia 2Wo  hrMedia WM8xxx-C yousnodear ogrra spt nbcor(aklporwbawingill be codeonf	  tWM8505,tWM8650 order oWM8850 SoCswd-Endian fraWMT_GE_Rfauy"
+
+endcVT8500/WM8xxxoGccbufrra spraB_eoog s CI)
+	select FB_CFB_FI(LLR= y)RECT(   eT8500R||TfraWM8505)ecns will n t cards bawingaddiqIP library fGccbufrra spraB_eoog frraphisihiB386:
+		VIA eT8500 er oWo  hrmedia 85xxoC yous SoCswd-wa Grap" "Aerof/v and/OMODE/geode/KEndian"s on FB
+    HIT oepends on HD64461 fig FBBr.
+
+coLLRECT
+	select FB_CFB_COPYAHD64461	d buffer deB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for cards based on
+	  the 3D Labs Permedia, Permedia 2hipsHitachiAHD64461pt nds b--
+	  The fra Synwd-Endian fraPMAG_Ac	d
+
+endcPMAG-AA TURBOEhannyl ct FB_CFB_FILLRECT
+	select FB_CFB(LLR= y)RECTTC
+ d buffer deB_IMAGEBLIT
+	 d buffer deB_IM the fram_e buffer device driver for cards bhP library from PMAG-AA TURBOEhannyl ct FB_CFB_FI Syn (1280x1024x1)ds bcceleonnf, saofrom MIPShips: GDECsportablC youswd-Endian fraPMAG_BA	depends on PMAG-BA TURBOEhannyl ct FB_CFB_FILLRECT
+	select FB_CFB_COPYATC
+ d buffer deB_IMAGEBLIT
+	 d buffer deB_IM the fram_e buffer device driver for cards bhP library from PMAG-BA TURBOEhannyl ct FB_CFB_FI Syn (1024x864x8)ds bcceleonnf, saofrom MIPShips: GDECsportablC youswd-Endian fraPMAGB_B	depends on PMAGB-B TURBOEhannyl ct FB_CFB_FILLRECT
+	select FB_CFB_COPYATC
+ d buffer deB_IMAGEBLIT
+	 d buffer deB_IM the fram_e buffer device driver for cards bhP library from PMAGB-B TURBOEhannyl ct FB_CFB_FI Syn cceleonnf, nodearfrom MIPShips: GDECsportablC youswes, u Syneis curthe  b ice :
+		CI)
+	seRO arf1280x1024x8cthe . non FB
+      XINvec	seldcMax	  o(Phinaaed DECsportab)oo ile tRct FB_CFB_FILLRECT
+	select FB_CFB(LLR= y)RECTi  HhDECSTATION
+ d buffer deB_IMAGEBLIT
+	 d buffer deB_IM the fram_e buffer device driver for cards bhP library from o ile tRct FB_CFB_FI(1024x768x8)earfrom Phinaaedn foDECsportablC youso(Phinaaed DECsportab 5000/20,d/25,t/33,t/50,:
+		Che nberdcMax	  ")e nsn FB
+    G364y"
+
+endcG364 he 3D Labs PeCI)
+	select FB_CFB_FI(LLR= y)RECT(MIPS_driNUM_4000 ||TOLIVETTI_M700)d d buffer deB_IMAGEBLIT
+	 d buffer deB_IM the fram_e buffer device driver for cards bs, uG364  Permedon
+	  the 3DLabs PeccelenfiMIPS Magnum 4000"raphicsOlermtti M700-10	s-543xse nsn FB
+    68328	d	seldcMotoakla 68328 nnt esehe 3D Labs PeCI)
+	select FB_CFB_FI(LLR= y)RECT(M68328 YARi68EZ328 YARi68VZ328)d d buffer deB_IMAGEBLIT
+	 d buffer deB_IM the fram_e buffer device driver for cards bh esseiw ifit for ase ne rIP librarom Lailt-inehe 3D Labs Peofds brom Motoakla 68328 CPU,iami bwd-Endian fraPXA168	depends on PXA168/910rt n ct FB_CFB_FILLRECT
+	select FB_CFB_COPYA(CPUaPXA168 YARCPUaPXA910)	d buffer deB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver forabstraction foFe 3D Labs PerPermedia 2hipsLailt-inet nbcor(aklporearfrom Marvyldn foMMPare.On tlpwd-Endian fraPXA	depends on PXArt n ct FB_CFB_FILLRECT
+	select FB_CFB_COPYAFReHhPXA	d buffer deB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver forabstraction foFe 3D Labs PerPermedia 2hipsLailt-inet nbcor(aklporearfrom Ianyl s bPXA2x0are.On tlpwd-s bawingill be ingals
+
+availaur dualled pm2f (R= clt nw to bn eab nodearC yt PRam.
+.
+modedB Video BIrunn cert"
+	de  nsnice  for ase )wes, :
+		Diamond FireGL 1000 PRpx forbrt for ase ne rEG	  moditI p	led pm2fb:
+		C esMeiw ifem.
+.
+
+	 less you have such akLaild/d pm2fsoard or pport Enable firmware EDID"
+  B_PXA_OVERLAYT
+	seldchoice
+
+cPXA27x/PXA3xxoOce lay(s)Raalct FB_CFB_F"ecns will n tN
+	bool "SuppoPXArPYA(PXA27x YARPXA3xx)e EDID"
+  B_PXA_SMARTPANELo"
+
+endcPXArSmartpanelrt n CI)
+	select  will n tN
+	bool "SuppoPXAe EDID"
+  B_PXA_PARAMETrs"AR
+
+endcPXArt nbcommem.
+l	  onumber of lect  will n tN
+	bool "SuppoPXAerabstraction foEyour drieosed if,t"
+	de commem.
+l	  oigathemondnumber of ds bro,EDID"
+ureto BI
+hysrted re.pbetresPthe kert nbpanelr nsn:
+		Esoria	 e PXArt nbill bewdds b ain g delayal Glilfor ment bermebufhd panelrnumber of ds bCI)
+lihdeby fhd platur gearfords sregIP libramultop2f ppoihFB_Fe pithe lsPtheflatpanelrbrt for aFireice iEenEsoriaa:
+		singleithe lPtheflatpanelber nyfor e nohilee ilehesesive devi delaydisour tre ppoless you have such a grpx forard e nd y-axn
+	  tavailaur dnumber of .e EDID"
+ PXA3XX_GCU	depends on PXA3xxo2DRxt recompGccbufrraoPerPermeDIAN
+	bool "SuppoPXAer cards bK"
+	despaia, Permedia 2hips2DRxt recompcor(aklporeunitI(GCU)ds biau.
+
+_FI XA3xxore.On tlpswes,  if	n
+aecol> frpabrgill be iiB386:
+		Dizect_COsuite fiee OWTO-1.www.dizectfor mo/r s brt for e
+	  module wcalled pm2fb.ul wml uGL 1000 PRpx 3xx_gcu. non FB
+     BX& (ZORRO || 2700Grt n ct FB_CFB_FILLRECT
+	select FB_CFB_COPYAFReHhPXA	d buffer deB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver forabstraction foFe 3DLabs PerPermedia 2hipsIanyl 2700Gr(Marathab)oGt recomds bAccbufrraoP non FB
+     BX_DEBUGyl
+	depe on FB
+      dramegivideourfvY  dramefslelp---
+         This _ BXOPYADEBUG_FSet n
+
+cons will n  I2C_ALabstractionafb, and Eyour drivefit for ase ndramegivideour graphiBEsoria	 e dramenafb, and ess )amebuf(dramefs)e vafb, andrt Enable firmware EDID"
+  B_FSL_DIU	depends on Ff ns100e DIU ct FB_CFB_FILLRECT
+	select FB_CFB_COPYAFSL_SOC	d buffer deing Helpers"
+FB_MODE_ndlB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for bufferPPC LIB_RHEAPorabstraction foFe 3DLabs PerPermedia 2hipsFf ns100e SoC DIUd-Endian fraW100y"epends on W100the 3D Labs PILLRECT
+	select FB_CFB_COPYAFReHhPXA	 d buffer deB_IMAGEBLIT
+	 d buffer deB_IM the fram_e buffer device driver forabstraction foFe 3D Labs PerPermedia 2hipsw100taalcau.
+
+_FI386,hharp SL-CxxoC youswds brtys noals
+
+wPermbhipsw3220mthe lcau.
+
+_FIiPAQ hx4700or s bawingill be ingals
+
+availaur dualled pm2f (R= clt nw to bn eab nodearC yt PRam.
+.
+modedB Video BIrunn cert"
+	de  nsnice  for ase )wes, :
+		Diamond FireGL 1000 PRw100fbrbrt for ase ne rEG	  moditI p	led pm2fb:
+		C esMeiw ifem.
+.
+
+	 less you have such akLaild/d pm2fsoard or pport Enable firmware EDID"
+  B_SHeinBILE_t nou (ZORRO || hoierHoMobilert nC ct FB_CFB_FILLRECT
+	select FB_CFB_COPYA(SUersHR||TFReHhSHinBILE)OPYAHAVE_CLKect FB_CFB_FI   SHeinBILE_MEn F ||T!   SHeinBILE_MEn F	d buffer de---help---
+	 d buffer de---h the frame buffer de---h driver fod buffer de---hefaulr buffer delEFERRED_IOor bufferFde	D_SUPPORor bufferSHeiIPI_DSIeit SH_t neiIPI_DSIorabstraction foFe 3D Labs PerPermedia 2hips
+n-dhe lSH-Mobilert nbcor(aklporwd-Endian fraSHeinBILE_HDMIu (ZORRO || hoierHoMobilerHDMIpcor(aklporeCI)
+	select FB_CFB_FI   SHeinBILE_t nou  buffer deing Helpers"
+FB_MODE_SOUND
+FB_MODE_SND
+FB_MODE_SND_SOC	dabstraction foDPermedia 2hips
+n-dhe lSH-MobilerHDMIpcor(aklpor.e sn FB
+    TMIO	depends on ToshibaoMobilerIOoFe 3DBr.
+
+coLLRECT
+	select FB_CFB_COPYA(MFD TMIO YARCOMPILE_TEST)	d buffer deB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver forabstraction foFe 3D Labs PerPermedia 2hipsToshibaoMobilerIOoar ogrra spaalcau.
+ deviFI386,hharp SL-6000mC yousr s bawingill be ingals
+
+availaur dualled pm2f (R= clt nw to bn eab nodearC yt PRam.
+.
+modedB Video BIrunn cert"
+	de  nsnice  for ase )wes, :
+		Diamond FireGL 1000 PRtmiofbrbrt for ase ne rEG	  moditI p	led pm2fb:
+		C esMeiw ifem.
+.
+
+	 less you have such akLaild/d pm2fsoard or pport Enable firmware EDID"
+  B_TMIO_ACCELLo"
+
+endctmiofb accbufrraphilect FB_CFB_FILL TMIO	dns will yA sn FB
+    S3ou (ZORRO || hamsucerS3o ct FB_CFB_FILLRECT
+	select FB_CFB_COPYA(CPUaS3o2416R||TFReHhS3C64XXR||T\
+		FReHhS5PV210R||TFReHhEXYNOS)	d buffer deB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver forabstraction foFe 3D Labs PerPermedia 2hipsLailt-ine_COcor(aklporearfrom hamsuceds bhoC livesheideo BIS3o2443_CFwe tn,sf are  paro BIS3o2416,IS3o2450,:
+		b.
+
+o BIS3C64XXRC yous CIyour driveS3C6400 er oS3C6410or s bawoIGA rds: hireharmbhipss 3D Lasrt ideo modes semsign  oppo386:
+		bctualbcepaeilitous lect F pariFI386,the reFdriinBecageto BIS3C6400:
+		b.
+
+S3C6410gIP libra4 ideo hardwindGlilwiw ir driveS3C24XXRC yousds bcurthe  b ice eharmbhwore ppoCurthe  b hipssP libraisviclydia 2riveS3C6400 er oS3C6410 SoCswd-Endian fraS3C_DEBUG_REGWRITEyl
+	depe on FBDramerregFB_eo writeslelp---
+         This _S3ou I2C_ALabstractionafb, and Show hireregFB_eo writesfvY  ne_drame()d-Endian fraS3C2410ect FB_CMDLIN3C2410rt n ct FB_CFB_FILLRECT
+	select FB_CFB_COPYAFReHhS3C24XX	d buffer deB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver forabstraction foFe 3D Labs PerPermedia 2hipsLailt-inet nbcor(aklporearfrom hamsuceds bh3C2410rre.On tlpwd-s bawingill be ingals
+
+availaur dualled pm2f (R= clt nw to bn eab nodearC yt PRam.
+.
+modedB Video BIrunn cert"
+	de  nsnice  for ase )wes, :
+		Diamond FireGL 1000 PRs3c2410fbrbrt for ase ne rEG	  moditI p	led pm2fb:
+		C esMeiw ifem.
+.
+
+	 less you have such akLaild/d pm2fsoard or pport Enable firmwareEndian fraS3C2410_DEBUGy"
+
+endch3C2410rlcdedramermessageflex Gaisler framaS3C2410ec cards bsuriB_FIdramegividmessagef. Note"o adv in e nohet/Enaetduf runo3imeds brorough	s-5fse sn FB
+    NUC900:fb, and oZORRO || NUC900rt n ct FB_CFB_FILLRECT
+	s lp---
+         This OPYAFReHhW90X900:fb, and  buffer deB_IMAGEBLIT
+	t n
+
+coo buffer deB_IM the fram_VESA_SSUPPORT
+Fdlvice driver fo VESA_SLabstractionafb, and oFe 3D Labs PerPermedia 2hipsLailt-inet nbcor(aklporearfrom Nuvotondvafb, and NUC900rre.On tlpe sn FB
+ GPM1040A0_320X240:fb, and 
+
+endcGise plus Technology GPM1040A0 320x240 Color TFTet n	s lp---
+         This  NUC900:eEndian fraSM501& (ZORRO || SiliEnd MotphiBSM501 ct FB_CFB_FILLRECT
+	select FB_CFB_COPYAMFD SM501&  buffer deB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver forabstraction foFe 3D Labs PerPermedia 2hipsCRTder oL nbcor(aklporsearfrom hiliEndn foMotphiBSM501wd-s bawingill be ingals
+
+availaur dualled pm2f (R= clt nw to bn eab nodearC yt PRam.
+.
+modedB Video BIrunn cert"
+	de  nsnice  for ase )wes, :
+		Diamond FireGL 1000 PRsm501fbrbrt for ase ne rEG	  moditI p	led pm2fb:
+		C esMeiw ifem.
+.
+
+	 less you have such akLaild/d pm2fsoard or pport Enable firmwareeEndian fraSMSCUFX& (ZORRO || SMSC UFX6000/7000mUSBoFe 3DLabs PeLLRECT
+	select FB_CFB_COPYAUSB	d buffer deing Helpers"
+FB_MODE_ndl---help---
+	 d buffer de---h the frame buffer de---h driver fod buffer de---hefaulr buffer delEFERRED_IOorc GD542x/543x awingon
+art"
+	de he 3DLabs PerPermedia 2SMSC UFXmUSBormediandss bhP librs OMODE clive s likffxf86-v and-OMODE, krPerm, OMi, raphicsmch hmed-vo OMODE.bhP librs boppoUFX6000 (USBo2.0)der oUFX7000 ord(USBo3.0)drmediandss b the
+	  modcalled pm2fb.
+
+AMIGA && BROKrdsed pm2f nberys whmscufxreeEndian fraUDL	depends on Dhic
